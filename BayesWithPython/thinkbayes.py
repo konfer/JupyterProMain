@@ -1,10 +1,30 @@
+"""This file contains code for use with "Think Bayes",
+by Allen B. Downey, available from greenteapress.com
+
+Copyright 2012 Allen B. Downey
+License: GNU GPLv3 http://www.gnu.org/licenses/gpl.html
+"""
+
+"""This file contains class definitions for:
+
+Hist: represents a histogram (map from values to integer frequencies).
+
+Pmf: represents a probability mass function (map from values to probs).
+
+_DictWrapper: private parent class for Hist and Pmf.
+
+Cdf: represents a discrete cumulative distribution function
+
+Pdf: represents a continuous probability density function
+
+"""
+
 import bisect
 import copy
 import logging
 import math
 import numpy
 import random
-import json
 
 import scipy.stats
 from scipy.special import erf, erfinv
@@ -129,7 +149,7 @@ class _DictWrapper(object):
 
 		values: map from value to probability
 		"""
-		for value, prob in values.iteritems():
+		for value, prob in values.items():
 			self.Set(value, prob)
 	
 	def InitPmf(self, values):
@@ -198,7 +218,7 @@ class _DictWrapper(object):
 		if m is None:
 			m = self.MaxLike()
 		
-		for x, p in self.d.iteritems():
+		for x, p in self.d.items():
 			if p:
 				self.Set(x, math.log(p / m))
 			else:
@@ -218,7 +238,7 @@ class _DictWrapper(object):
 		if m is None:
 			m = self.MaxLike()
 		
-		for x, p in self.d.iteritems():
+		for x, p in self.d.items():
 			self.Set(x, math.exp(p - m))
 	
 	def GetDict(self):
@@ -229,7 +249,7 @@ class _DictWrapper(object):
 		"""Sets the dictionary."""
 		self.d = d
 	
-	def Values(self):
+	def values(self):
 		"""Gets an unsorted sequence of values.
 
 		Note: one source of confusion is that the keys of this
@@ -252,7 +272,7 @@ class _DictWrapper(object):
 	
 	def Print(self):
 		"""Prints the values and freqs/probs in ascending order."""
-		for val, prob in sorted(self.d.iteritems()):
+		for val, prob in sorted(self.d.items()):
 			print(val, prob)
 	
 	def Set(self, x, y = 0):
@@ -294,18 +314,18 @@ class _DictWrapper(object):
 	
 	def Total(self):
 		"""Returns the total of the frequencies/probabilities in the map."""
-		total = sum(self.d.itervalues())
+		total = sum(self.d.values())
 		return total
 	
 	def MaxLike(self):
 		"""Returns the largest frequency/probability in the map."""
-		return max(self.d.itervalues())
+		return max(self.d.values())
 
 
 class Hist(_DictWrapper):
 	"""Represents a histogram, which is a map from values to frequencies.
 
-	Values can be any hashable type; frequencies are integer counters.
+	values can be any hashable type; frequencies are integer counters.
 	"""
 	
 	def Freq(self, x):
@@ -340,7 +360,7 @@ class Hist(_DictWrapper):
 class Pmf(_DictWrapper):
 	"""Represents a probability mass function.
 
-	Values can be any hashable type; probabilities are floating-point.
+	values can be any hashable type; probabilities are floating-point.
 	Pmfs are not necessarily normalized.
 	"""
 	
@@ -365,11 +385,11 @@ class Pmf(_DictWrapper):
 		return MakeCdfFromPmf(self, name = name)
 	
 	def ProbGreater(self, x):
-		t = [prob for (val, prob) in self.d.iteritems() if val > x]
+		t = [prob for (val, prob) in self.d.items() if val > x]
 		return sum(t)
 	
 	def ProbLess(self, x):
-		t = [prob for (val, prob) in self.d.iteritems() if val < x]
+		t = [prob for (val, prob) in self.d.items() if val < x]
 		return sum(t)
 	
 	def Normalize(self, fraction = 1.0):
@@ -406,7 +426,7 @@ class Pmf(_DictWrapper):
 		
 		target = random.random()
 		total = 0.0
-		for x, p in self.d.iteritems():
+		for x, p in self.d.items():
 			total += p
 			if total >= target:
 				return x
@@ -421,7 +441,7 @@ class Pmf(_DictWrapper):
 			float mean
 		"""
 		mu = 0.0
-		for x, p in self.d.iteritems():
+		for x, p in self.d.items():
 			mu += p * x
 		return mu
 	
@@ -439,7 +459,7 @@ class Pmf(_DictWrapper):
 			mu = self.Mean()
 		
 		var = 0.0
-		for x, p in self.d.iteritems():
+		for x, p in self.d.items():
 			var += p * (x - mu) ** 2
 		return var
 	
@@ -783,7 +803,7 @@ class Cdf(object):
 		"""Makes a Pmf."""
 		return MakePmfFromCdf(self, name = name)
 	
-	def Values(self):
+	def values(self):
 		"""Returns a sorted list of values.
 		"""
 		return self.xs
@@ -992,7 +1012,7 @@ def MakeCdfFromDict(d, name = ''):
 	Returns:
 		Cdf object
 	"""
-	return MakeCdfFromItems(d.iteritems(), name)
+	return MakeCdfFromItems(d.items(), name)
 
 
 def MakeCdfFromHist(hist, name = ''):
@@ -1051,7 +1071,7 @@ class Suite(Pmf):
 
 		returns: the normalizing constant
 		"""
-		for hypo in self.Values():
+		for hypo in self.values():
 			like = self.Likelihood(data, hypo)
 			self.Mult(hypo, like)
 		return self.Normalize()
@@ -1067,7 +1087,7 @@ class Suite(Pmf):
 		Args:
 			data: any representation of the data
 		"""
-		for hypo in self.Values():
+		for hypo in self.values():
 			like = self.LogLikelihood(data, hypo)
 			self.Incr(hypo, like)
 	
@@ -1085,7 +1105,7 @@ class Suite(Pmf):
 		returns: the normalizing constant
 		"""
 		for data in dataset:
-			for hypo in self.Values():
+			for hypo in self.values():
 				like = self.Likelihood(data, hypo)
 				self.Mult(hypo, like)
 		return self.Normalize()
@@ -1127,7 +1147,7 @@ class Suite(Pmf):
 	def MakeOdds(self):
 		"""Transforms from probabilities to odds.
 
-		Values with prob=0 are removed.
+		values with prob=0 are removed.
 		"""
 		for hypo, prob in self.Items():
 			if prob:
