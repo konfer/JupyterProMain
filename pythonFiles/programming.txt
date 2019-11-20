@@ -1,4 +1,0 @@
-hello world.
-creating new game.
-append:hello world.
-append:creating new game.
